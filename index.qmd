@@ -5,7 +5,7 @@ format: html
 editor: visual
 ---
 
-```{r}
+```{r, warning = FALSE, error = FALSE, output = FALSE}
 library(tidyverse)
 library(leaflet)
 library(wbstats)
@@ -23,7 +23,7 @@ wb_dat <- wb_dat[-c(which(is.na(wb_dat$longitude) | is.na(wb_dat$latitude))),]
 
 The data used in this assignment come from the World Bank. There are two data sets which are being used. The proportion of a country that is forested, and also the total land area of the forests. Also included with world bank data are things like longitude and latitude information for capitals.
 
-```{r}
+```{r, warning = FALSE, error = FALSE, output = FALSE}
 
 # Function to assign colors
 make_color <- function(x) {
@@ -55,17 +55,20 @@ wb_dat2 <- wb_dat %>%
 
 marked_map <- leaflet(wb_dat2) %>% setView(lng = 0, lat = 0, zoom = 1) %>% addProviderTiles(providers$Esri.WorldImagery) %>%
   addAwesomeMarkers(~longitude, ~latitude, icon = icons)
+
+```
+
+```{r}
 marked_map
 ```
 
 This first map places a single marker at the capital of each country, but I found it to be very difficult to read at smaller zoom levels, also some information seems quite wrong compared to raw data, so it is not enough information. I chose to use satellite images because the subject is forestry so why not?
 
-```{r}
+```{r, warning = FALSE, error = FALSE, output = FALSE}
 url <- "https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json"
 geojson <- jsonlite::fromJSON(url)
 library("rgdal")
 res <- readOGR(dsn = url)
-res$Alpha.2
 colnames(wb_dat2)[2] <- 'Alpha.2'
 chloro_data <- merge(res, y = wb_dat2[c("Alpha.2","PercentForested")], by = 'Alpha.2', all.x = TRUE)
 pal <- colorNumeric(
@@ -85,12 +88,15 @@ chloro_map <- leaflet(chloro_data) %>%
       dashArray = "",
       fillOpacity = 0.7,
       bringToFront = TRUE))
+```
+
+```{r}
 chloro_map
 ```
 
 This map appears to be superior to the previous map. Though it does not show explicit numbers on the map, it is a very nice looking example that shows general proportions of forestry in different countries. The country shape data came from https://github.com/deldersveld/topojson/blob/master/world-countries.json. I tried using the non-antarctic version but it wasn't working for some strange reason.
 
-```{r}
+```{r,warning = FALSE, error = FALSE, output = FALSE}
 
 make_ts_popup <- function(id){
   ggplot(filter(wb_dat, id == country)) +
@@ -109,13 +115,17 @@ Marked_Map_GraphPopUp <- leaflet(wb_dat2) %>% setView(lng = 0, lat = 0, zoom = 1
                     popup = popupGraph(plot_all, width = 300, height = 200),
                     icon = icons)
 
+
+```
+
+```{r}
 Marked_Map_GraphPopUp
 ```
 
 This map was similar to the first one, but I decided to include popup graphs with time series that show how the area of forests have changed over time. The most interesting time series are in South America in my opinion. Most countries are heavily deforesting aside from Chile, and Uruguay. By far the most interesting thing about this is that Chile and Uruguay are the most developed nations in South America (they have the highest GDP per Capita) and have a different trend in forestation.
 
-```{r}
-leaflet(chloro_data) %>%
+```{r, warning = FALSE, error = FALSE, output = FALSE}
+Chloro_map_popup <- leaflet(chloro_data) %>%
   addTiles() %>%
   addPolygons(fillColor = ~pal(PercentForested),
               weight = 2,
@@ -138,6 +148,10 @@ leaflet(chloro_data) %>%
                    fillOpacity = 0.8,
                    popup = popupGraph(plot_all, width = 300, height = 200))
 
+```
+
+```{r}
+Chloro_map_popup
 ```
 
 I thought that this would be the final map which combines the best elements of the two previous graphs. It has colored polygons for different proportions of land containing forests as well as small circular markers in capitals which can be clicked for the same popup graphs as before. I thought to make the circles the same color change as the rest of the countries but it was hard to find capitals if you don't know where to look. I initially tried to get it mapped so the capital circles weren't necessary, but after a few attempts at merging the time series with the spatial data, it just wasn't loading properly.
